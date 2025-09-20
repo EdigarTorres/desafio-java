@@ -5,19 +5,25 @@
 - Nome: Edigar Pierott Torres
 - Matrícula: C159586
 - Papel: Backend Java
-- Link para o GitHub: https://github.com/EdigarTorres/desafio-java-edigar
+- Link para o GitHub: https://github.com/EdigarTorres/desafio-java
+
  ---
 
 ## 📘 Descrição
 
-Projeto desenvolvido como parte do desafio técnico para o Caixaverso. O objetivo é construir uma **API REST** para cadastro e simulação de empréstimos, utilizando o framework **Quarkus**. A aplicação implementa as operações básicas de um CRUD completo.
+Projeto desenvolvido como parte do desafio técnico para o Caixaverso. O objetivo é construir uma **API REST** para
+cadastro e simulação de empréstimos, utilizando o framework **Quarkus**. A aplicação implementa as operações básicas de
+um CRUD completo.
 
 ---
+
 ## 🚀 Sobre o Projeto
 
-A aplicação permite, que a partir dos dados básicos de um produto de empréstimos, seja realizada uma simulação contendo os dados necessários para que o cliente tome uma descisão.
+A aplicação permite que, a partir dos dados básicos de um produto de empréstimos, seja realizada uma simulação contendo
+os dados necessários para que o cliente tome uma descisão.
 
 ---
+
 ## 💾 Tecnologias Utilizadas
 
 - **Quarkus** (Framework principal)
@@ -31,14 +37,8 @@ A aplicação permite, que a partir dos dados básicos de um produto de emprést
 - **Sonarlint** (Análise estática de código)
 - **Git** (Controle de versão)
 - **GitHub** (Hospedagem do repositório)
----
+- **Jacoco** (Análise de cobertura de código)
 
-## 🧩 Extensões Quarkus Utilizadas
-- quarkus-hibernate-orm-panache
-- quarkus-resteasy-jackson
-- quarkus-jdbc-h2
-- quarkus-smallrye-openapi
-- quarkus-junit5
 ---
 
 ## ▶️ Como executar
@@ -61,49 +61,61 @@ A aplicação permite, que a partir dos dados básicos de um produto de emprést
    ```
    {
      "id": "long",
-     "nome": "string",
-     "taxaJurosAnual": "double",
-     "prazoMaximoMeses": "int",
+     "nome": "String",
+     "taxaJurosAnual": "BigDecimal",
+     "prazoMaximoMeses": "Integer",
    }
 
 2. A solicitação da simulação do empréstimo deve ser feita com os seguintes dados:
    ```
    {
-    "idProduto": "long",
-    "valorSolicitado": "double",
-    "prazoMeses": "int",
+    "idProduto": "Long",
+    "valorSolicitado": "Double",
+    "prazoMeses": "Integer",
    }
    ``` 
 
 3. A simulação gerada terá o seguinte formato:
    ```
    {
-    "valorSolicitado": "string",
-    "prazoMeses": "int",
-    "taxaJurosAnual": "string",
-    "taxaJurosEfetivaMensal": "string",
-    "valorTotalComJuros": "string",
-    "valorParcelaMensal": "string",
-    "memoriaCalculo": [
-      {
-        "mes": "int",
-        "amortizacao": "string",
-        "juros": "string",
-        "saldoDevedor": "string"
-      }
-   }
+     "produto": {
+       "id": "Long",
+       "nome": "String",
+       "taxaJurosAnual": "BigDecimal",
+       "prazoMaximoMeses": "Integer"
+     },
+     "valorSolicitado": "String",
+     "prazoMeses": "Integer",
+     "taxaJurosAnual": "String",
+     "taxaJurosEfetivaMensal": "String",
+     "valorTotalComJuros": "String",
+     "valorParcelaMensal": "String",
+     "memoriaCalculo": [
+       {
+         "mes": "int",
+         "amortizacao": "0.00",
+         "juros": "0.00",
+         "saldoDevedor": "0.10"
+       },
+       {
+         "mes": "int",
+         "amortizacao": "String",
+         "juros": "String",
+         "saldoDevedor": "String"
+       },
+       ...
 ---
 
 ## 🔗 Endpoints da API
 
-| Método     | Rota               | Descrição                                | 
-|------------|--------------------|------------------------------------------| 
-| GET        | `/produtos`        | Lista todos os produtos de empréstimos   | 
-| GET        | `/produtos/{id}`   | Busca um produto de empréstimo por ID    |
-| POST       | `/produtos`        | Cadastra um novo produto de empréstimo   | 
-| DELETE     | `/produtos/{id}`   | Deleta um produto de empréstimo          | 
-| PUT        | `/produtos/{id}`   | Atualiza um produto de empréstimo        | 
-| POST       | `/simular`         | Simula um empréstimo                     | 
+| Método | Rota             | Descrição                              | 
+|--------|------------------|----------------------------------------| 
+| GET    | `/produtos`      | Lista todos os produtos de empréstimos | 
+| GET    | `/produtos/{id}` | Busca um produto de empréstimo por ID  |
+| POST   | `/produtos`      | Cadastra um novo produto de empréstimo | 
+| DELETE | `/produtos/{id}` | Deleta um produto de empréstimo        | 
+| PUT    | `/produtos/{id}` | Atualiza um produto de empréstimo      | 
+| POST   | `/simulacoes`    | Simula um empréstimo                   | 
 
 ---
 
@@ -115,7 +127,7 @@ A aplicação permite, que a partir dos dados básicos de um produto de emprést
 
 🧪 Cobertura
 
-• 	Testes unitários com Mockito
+• Testes unitários com Mockito
 
 ---
 
