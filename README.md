@@ -59,7 +59,6 @@ os dados necessários para que o cliente tome uma descisão.
 1. Envie os dados do produto no seguinte formats:
    ```
    {
-     "id": "long",
      "nome": "String",
      "taxaJurosAnual": "BigDecimal",
      "prazoMaximoMeses": "Integer",
