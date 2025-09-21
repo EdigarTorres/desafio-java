@@ -1,90 +1,84 @@
 package caixaverso.controller;
 
+import caixaverso.dto.SimulacaoRequest;
+import caixaverso.dto.SimulacaoResponse;
 import caixaverso.model.ProdutoEmprestimo;
+import caixaverso.service.SimulacaoService;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.http.ContentType;
 import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
+import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 
 @QuarkusTest
 class SimulacaoControllerTest {
 
     @Inject
-    EntityManager em;
+    SimulacaoController controller;
+
+    @InjectMock
+    SimulacaoService simulacaoService;
+
+    private SimulacaoRequest simulacaoRequest;
+    private SimulacaoResponse simulacaoResponse;
 
     @BeforeEach
-    @Transactional
     void setup() {
-        ProdutoEmprestimo produto = new ProdutoEmprestimo("Teste REST", new BigDecimal("15.0"), 36);
-        produto.setId(500L);
-        em.merge(produto);
+        simulacaoRequest = new SimulacaoRequest(1L, 10000.0, 12);
+
+        ProdutoEmprestimo mockProduto = new ProdutoEmprestimo("Produto Teste", new BigDecimal("10.00"), 12);
+        mockProduto.setId(1L);
+
+        simulacaoResponse = new SimulacaoResponse(
+                mockProduto,
+                "10000.00",
+                12,
+                "10.00",
+                "0.800000",
+                "10500.00",
+                "875.00",
+                Collections.emptyList()
+        );
     }
 
     @Test
-    void deveRetornarSimulacaoValida() {
-        given()
-                .contentType(ContentType.JSON)
-                .body("""
-                {
-                    "idProduto": 500,
-                    "valorSolicitado": 10000,
-                    "prazoMeses": 12
-                }
-            """)
-                .when()
-                .post("/simulacoes")
-                .then()
-                .statusCode(200)
-                .body("valorSolicitado", equalTo("10000.00"))
-                .body("prazoMeses", equalTo(12))
-                .body("memoriaCalculo.size()", equalTo(12));
+    void deveSimularComSucesso() {
+
+        Mockito.when(simulacaoService.simular(any(SimulacaoRequest.class)))
+                .thenReturn(simulacaoResponse);
+
+        Response response = controller.simular(simulacaoRequest);
+
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        assertNotNull(response.getEntity());
+        assertInstanceOf(SimulacaoResponse.class, response.getEntity());
+        SimulacaoResponse actualResponse = (SimulacaoResponse) response.getEntity();
+        assertEquals(simulacaoResponse.produto().getId(), actualResponse.produto().getId());
+        assertEquals(simulacaoResponse.valorParcelaMensal(), actualResponse.valorParcelaMensal());
+
+        Mockito.verify(simulacaoService).simular(simulacaoRequest);
     }
 
     @Test
-    void deveRetornarErroParaProdutoInexistente() {
-        given()
-                .contentType(ContentType.JSON)
-                .body("""
-                {
-                    "idProduto": 999,
-                    "valorSolicitado": 10000,
-                    "prazoMeses": 12
-                }
-            """)
-                .when()
-                .post("/simulacoes")
-                .then()
-                .statusCode(400)
-                .body("mensagem", containsString("Produto de empréstimo não encontrado para o ID informado"));
+    void deveLancarIllegalArgumentException_quandoServicoLanca() {
 
+        String errorMessage = "Produto de empréstimo não encontrado para o ID informado.";
+        Mockito.when(simulacaoService.simular(any(SimulacaoRequest.class)))
+                .thenThrow(new IllegalArgumentException(errorMessage));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            controller.simular(simulacaoRequest);
+        });
+
+        assertEquals(errorMessage, exception.getMessage());
+        Mockito.verify(simulacaoService).simular(simulacaoRequest);
     }
-
-    @Test
-    void deveRetornarBadRequestQuandoProdutoNaoExiste() {
-        given()
-                .contentType(ContentType.JSON)
-                .body("""
-                {
-                    "idProduto": 9999,
-                    "valorSolicitado": 5000,
-                    "prazoMeses": 12
-                }
-            """)
-                .when()
-                .post("/simulacoes")
-                .then()
-                .statusCode(400)
-                .body("tipo", equalTo("Erro de validação"))
-                .body("mensagem", containsString("Produto de empréstimo não encontrado"));
-    }
-
-
 }

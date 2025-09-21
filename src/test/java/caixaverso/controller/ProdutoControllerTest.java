@@ -1,193 +1,154 @@
 package caixaverso.controller;
 
+import caixaverso.dto.ProdutoRequest;
 import caixaverso.model.ProdutoEmprestimo;
+import caixaverso.validator.ProdutoValidator;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
+import jakarta.persistence.TypedQuery;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.InternalServerErrorException;
 import jakarta.ws.rs.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 
 @QuarkusTest
 class ProdutoControllerTest {
 
     @Inject
-    EntityManager em;
-
     ProdutoController controller;
+
+    @InjectMock
+    EntityManager entityManager;
+
+    @InjectMock
+    ProdutoValidator produtoValidator;
+
+    private ProdutoEmprestimo produto;
+    private ProdutoRequest produtoRequest;
 
     @BeforeEach
     void setup() {
-        controller = new ProdutoController(em);
-    }
-
-    @Test
-    @Transactional
-    void deveCadastrarProdutoValido() {
-        ProdutoEmprestimo produto = new ProdutoEmprestimo("Empréstimo Pessoal", new BigDecimal("10.5"), 36);
+        produto = new ProdutoEmprestimo("Crédito Pessoal", new BigDecimal("12.5"), 24);
         produto.setId(1L);
 
-        ProdutoEmprestimo salvo = controller.cadastrar(produto);
-
-        assertNotNull(salvo);
-        assertEquals("Empréstimo Pessoal", salvo.getNome());
+        produtoRequest = new ProdutoRequest("Crédito Pessoal", new BigDecimal("12.5"), 24);
     }
 
     @Test
-    void deveLancarInternalServerErrorAoFalharPersistencia() {
-        var entityManager = mock(jakarta.persistence.EntityManager.class);
-
-        ProdutoEmprestimo produto = new ProdutoEmprestimo("Falha", new BigDecimal("10.0"), 12);
-        produto.setId(999L);
-
-        doThrow(new RuntimeException("Falha simulada")).when(entityManager).persist(produto);
-
-        InternalServerErrorException ex = assertThrows(InternalServerErrorException.class, () -> controller.cadastrar(produto));
-        assertTrue(ex.getMessage().contains("Erro ao cadastrar produto"));
-    }
-
-    @Test
-    @Transactional
-    void deveLancarExcecaoAoCadastrarProdutoInvalido() {
-        ProdutoEmprestimo produto = new ProdutoEmprestimo("", new BigDecimal("-5.0"), 0);
-        produto.setId(2L);
-
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> controller.cadastrar(produto));
-        assertTrue(ex.getMessage().contains("O nome do produto é obrigatório"));
-    }
-
-    @Test
-    @Transactional
     void deveListarTodosProdutos() {
-        ProdutoEmprestimo p1 = new ProdutoEmprestimo("Produto A", new BigDecimal("8.0"), 24);
-        ProdutoEmprestimo p2 = new ProdutoEmprestimo("Produto B", new BigDecimal("12.0"), 48);
-        p1.setId(3L);
-        p2.setId(4L);
-        em.persist(p1);
-        em.persist(p2);
+        // Arrange
+        TypedQuery<ProdutoEmprestimo> query = (TypedQuery<ProdutoEmprestimo>) Mockito.mock(TypedQuery.class);
+        Mockito.when(entityManager.createQuery(anyString(), Mockito.eq(ProdutoEmprestimo.class))).thenReturn(query);
+        Mockito.when(query.getResultList()).thenReturn(Collections.singletonList(produto));
 
-        List<ProdutoEmprestimo> produtos = controller.listar();
-        assertTrue(produtos.size() >= 2);
+        // Act
+        List<ProdutoEmprestimo> result = controller.listar();
+
+        // Assert
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.size());
     }
 
     @Test
-    @Transactional
-    void deveBuscarProdutoPorId() {
-        ProdutoEmprestimo produto = new ProdutoEmprestimo("Produto C", new BigDecimal("9.0"), 36);
-        produto.setId(5L);
-        em.persist(produto);
+    void deveListarPorId_quandoEncontrado() {
+        // Arrange
+        Mockito.when(entityManager.find(ProdutoEmprestimo.class, 1L)).thenReturn(produto);
 
-        ProdutoEmprestimo encontrado = controller.listarPorId(5L);
-        assertEquals("Produto C", encontrado.getNome());
+        // Act
+        ProdutoEmprestimo result = controller.listarPorId(1L);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
     }
 
     @Test
-    void deveLancarExcecaoAoBuscarProdutoInexistente() {
-        NotFoundException ex = assertThrows(NotFoundException.class, () -> controller.listarPorId(999L));
-        assertEquals("Produto não encontrado", ex.getMessage());
+    void deveLancarNotFound_quandoListarPorIdNaoEncontrado() {
+        // Arrange
+        Mockito.when(entityManager.find(ProdutoEmprestimo.class, anyLong())).thenReturn(null);
+
+        // Act & Assert
+        assertThrows(NotFoundException.class, () -> controller.listarPorId(99L));
     }
 
     @Test
-    @Transactional
-    void deveAtualizarProdutoExistente() {
-        ProdutoEmprestimo original = new ProdutoEmprestimo("Produto D", new BigDecimal("11.0"), 24);
-        original.setId(6L);
-        em.persist(original);
+    void deveCadastrarProduto() {
+        // Act
+        ProdutoEmprestimo result = controller.cadastrar(produtoRequest);
 
-        ProdutoEmprestimo atualizado = new ProdutoEmprestimo("Produto D Atualizado", new BigDecimal("13.0"), 36);
-        ProdutoEmprestimo resultado = controller.atualizar(6L, atualizado);
-
-        assertEquals("Produto D Atualizado", resultado.getNome());
-        assertEquals(36, resultado.getPrazoMaximoMeses());
+        // Assert
+        Mockito.verify(produtoValidator).validate(produtoRequest); // Verifica se o validador foi chamado
+        Mockito.verify(entityManager).persist(any(ProdutoEmprestimo.class)); // Verifica se a persistência foi chamada
+        assertNotNull(result);
+        assertEquals("Crédito Pessoal", result.getNome());
     }
 
     @Test
-    void deveLancarExcecaoAoAtualizarProdutoInexistente() {
-        ProdutoEmprestimo produto = new ProdutoEmprestimo("Produto X", new BigDecimal("10.0"), 12);
-        NotFoundException ex = assertThrows(NotFoundException.class, () -> controller.atualizar(999L, produto));
-        assertEquals("Produto não encontrado", ex.getMessage());
+    void deveLancarBadRequest_quandoCadastrarProdutoInvalido() {
+        // Arrange
+        Mockito.doThrow(new BadRequestException("Erro de validação")).when(produtoValidator).validate(any(ProdutoRequest.class));
+
+        // Act & Assert
+        assertThrows(BadRequestException.class, () -> controller.cadastrar(produtoRequest));
+        Mockito.verify(entityManager, Mockito.never()).persist(any()); // Garante que a persistência NUNCA foi chamada
     }
 
     @Test
-    @Transactional
-    void deveDeletarProdutoExistente() {
-        ProdutoEmprestimo produto = new ProdutoEmprestimo("Produto E", new BigDecimal("7.5"), 18);
-        produto.setId(7L);
-        em.persist(produto);
+    void deveAtualizarProduto() {
+        // Arrange
+        ProdutoRequest requestAtualizacao = new ProdutoRequest("Nome Novo", new BigDecimal("15.0"), 36);
+        Mockito.when(entityManager.find(ProdutoEmprestimo.class, 1L)).thenReturn(produto);
 
-        controller.deletar(7L);
-        ProdutoEmprestimo excluido = em.find(ProdutoEmprestimo.class, 7L);
-        assertNull(excluido);
+        // Act
+        ProdutoEmprestimo result = controller.atualizar(1L, requestAtualizacao);
+
+        // Assert
+        Mockito.verify(produtoValidator).validate(requestAtualizacao);
+        assertNotNull(result);
+        assertEquals("Nome Novo", result.getNome());
+        assertEquals(36, result.getPrazoMaximoMeses());
     }
 
     @Test
-    void deveLancarExcecaoAoDeletarProdutoInexistente() {
-        NotFoundException ex = assertThrows(NotFoundException.class, () -> controller.deletar(999L));
-        assertEquals("Produto não encontrado", ex.getMessage());
+    void deveLancarNotFound_quandoAtualizarProdutoNaoExistente() {
+        // Arrange
+        Mockito.when(entityManager.find(ProdutoEmprestimo.class, anyLong())).thenReturn(null);
+
+        // Act & Assert
+        assertThrows(NotFoundException.class, () -> controller.atualizar(99L, produtoRequest));
     }
 
     @Test
-    void deveLancarExcecaoSeNomeForNuloOuVazio() {
-        ProdutoEmprestimo produto = new ProdutoEmprestimo("", new BigDecimal("10.0"), 12);
-        produto.setId(1L);
+    void deveDeletarProduto() {
+        // Arrange
+        Mockito.when(entityManager.find(ProdutoEmprestimo.class, 1L)).thenReturn(produto);
 
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> controller.cadastrar(produto));
-        assertEquals("O nome do produto é obrigatório.", ex.getMessage());
+        // Act
+        controller.deletar(1L);
+
+        // Assert
+        Mockito.verify(entityManager).remove(produto); // Verifica se o método remove foi chamado com o objeto correto
     }
 
     @Test
-    void deveLancarExcecaoSeTaxaForNegativa() {
-        ProdutoEmprestimo produto = new ProdutoEmprestimo("Produto Inválido", new BigDecimal("-1.0"), 12);
-        produto.setId(2L);
+    void deveLancarNotFound_quandoDeletarProdutoNaoExistente() {
+        // Arrange
+        Mockito.when(entityManager.find(ProdutoEmprestimo.class, anyLong())).thenReturn(null);
 
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> controller.cadastrar(produto));
-        assertEquals("A taxa de juros deve ser maior ou igual a zero.", ex.getMessage());
+        // Act & Assert
+        assertThrows(NotFoundException.class, () -> controller.deletar(99L));
+        Mockito.verify(entityManager, Mockito.never()).remove(any()); // Garante que o remove NUNCA foi chamado
     }
-
-    @Test
-    void deveLancarExcecaoSePrazoForZeroOuNegativo() {
-        ProdutoEmprestimo produto = new ProdutoEmprestimo("Produto Inválido", new BigDecimal("10.0"), 0);
-        produto.setId(3L);
-
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> controller.cadastrar(produto));
-        assertEquals("O prazo máximo deve ser maior que zero.", ex.getMessage());
-    }
-
-    @Test
-    void deveLancarExcecaoSeNomeForNull() {
-        ProdutoEmprestimo produto = new ProdutoEmprestimo(null, new BigDecimal("10.0"), 12);
-        produto.setId(10L);
-
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> controller.cadastrar(produto));
-        assertEquals("O nome do produto é obrigatório.", ex.getMessage());
-    }
-
-    @Test
-    void deveLancarExcecaoSeTaxaForNull() {
-        ProdutoEmprestimo produto = new ProdutoEmprestimo("Produto Inválido", null, 12);
-        produto.setId(11L);
-
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> controller.cadastrar(produto));
-        assertEquals("A taxa de juros deve ser maior ou igual a zero.", ex.getMessage());
-    }
-
-    @Test
-    void deveLancarExcecaoSePrazoForNull() {
-        ProdutoEmprestimo produto = new ProdutoEmprestimo("Produto Inválido", new BigDecimal("10.0"), null);
-        produto.setId(12L);
-
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> controller.cadastrar(produto));
-        assertEquals("O prazo máximo deve ser maior que zero.", ex.getMessage());
-    }
-
 }

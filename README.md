@@ -3,7 +3,6 @@
 ## 👥 Desenvolvedor
 
 - Nome: Edigar Pierott Torres
-- Matrícula: C159586
 - Papel: Backend Java
 - Link para o GitHub: https://github.com/EdigarTorres/desafio-java
 

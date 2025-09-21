@@ -38,7 +38,7 @@ public final class MavenWrapperDownloader {
         log("Apache Maven Wrapper Downloader " + WRAPPER_VERSION);
 
         if (args.length != 2) {
-            System.err.println(" - ERROR wrapperUrl or wrapperJarPath parameter missing");
+            logger.info(" - ERROR wrapperUrl or wrapperJarPath parameter missing");
             System.exit(1);
         }
 
@@ -50,7 +50,7 @@ public final class MavenWrapperDownloader {
             downloadFileFromURL(wrapperUrl, wrapperJarPath);
             log("Done");
         } catch (IOException e) {
-            System.err.println("- Error downloading: " + e.getMessage());
+            logger.info("- Error downloading: " + e.getMessage());
             if (VERBOSE) {
                 e.printStackTrace();
             }
@@ -86,7 +86,7 @@ public final class MavenWrapperDownloader {
 
     private static void log(String msg) {
         if (VERBOSE) {
-            System.out.println(msg);
+            logger.info(msg);
         }
     }
 
