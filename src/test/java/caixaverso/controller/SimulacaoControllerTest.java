@@ -9,6 +9,7 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -50,6 +51,7 @@ class SimulacaoControllerTest {
     }
 
     @Test
+    @DisplayName("Deve simular com sucesso e retornar status 200 OK")
     void deveSimularComSucesso() {
 
         Mockito.when(simulacaoService.simular(any(SimulacaoRequest.class)))
@@ -68,17 +70,23 @@ class SimulacaoControllerTest {
     }
 
     @Test
-    void deveLancarIllegalArgumentException_quandoServicoLanca() {
+    @DisplayName("Deve retornar status 400 Bad Request quando o serviço lança IllegalArgumentException")
+    void deveRetornarBadRequest_quandoServicoLancaIllegalArgumentException() {
 
         String errorMessage = "Produto de empréstimo não encontrado para o ID informado.";
         Mockito.when(simulacaoService.simular(any(SimulacaoRequest.class)))
                 .thenThrow(new IllegalArgumentException(errorMessage));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            controller.simular(simulacaoRequest);
-        });
+        Response response = controller.simular(simulacaoRequest);
 
-        assertEquals(errorMessage, exception.getMessage());
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+        assertNotNull(response.getEntity());
+        assertInstanceOf(SimulacaoController.ErroResponse.class, response.getEntity());
+
+        SimulacaoController.ErroResponse erro = (SimulacaoController.ErroResponse) response.getEntity();
+        assertEquals("Erro de validação", erro.tipo());
+        assertEquals(errorMessage, erro.mensagem());
+
         Mockito.verify(simulacaoService).simular(simulacaoRequest);
     }
 }

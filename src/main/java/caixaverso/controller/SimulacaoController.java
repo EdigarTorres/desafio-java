@@ -28,7 +28,16 @@ public class SimulacaoController {
             description = "Recebe o ID do produto, valor solicitado e prazo em meses. Retorna o cálculo detalhado."
     )
     public Response simular(@Valid SimulacaoRequest request) {
-        SimulacaoResponse response = simulacaoService.simular(request);
-        return Response.ok(response).build();
+        try {
+            SimulacaoResponse response = simulacaoService.simular(request);
+            return Response.ok(response).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErroResponse("Erro de validação", e.getMessage()))
+                    .build();
+        }
+    }
+
+    public record ErroResponse(String tipo, String mensagem) {
     }
 }

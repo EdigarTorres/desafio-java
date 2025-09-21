@@ -27,6 +27,13 @@ public class SimulacaoService {
             throw new IllegalArgumentException("Produto de empréstimo não encontrado para o ID informado.");
         }
 
+        if (request.prazoMeses() > produto.getPrazoMaximoMeses()) {
+            throw new IllegalArgumentException(
+                    String.format("O prazo solicitado (%d meses) excede o prazo máximo do produto (%d meses).",
+                            request.prazoMeses(), produto.getPrazoMaximoMeses())
+            );
+        }
+
         BigDecimal taxaAnual = produto.getTaxaJurosAnual().divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP);
         BigDecimal taxaMensal = BigDecimal.valueOf(Math.pow(1 + taxaAnual.doubleValue(), 1.0 / 12) - 1)
                 .setScale(10, RoundingMode.HALF_UP);
