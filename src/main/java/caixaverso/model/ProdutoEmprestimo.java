@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 public class ProdutoEmprestimo {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     @Column(nullable = false)
