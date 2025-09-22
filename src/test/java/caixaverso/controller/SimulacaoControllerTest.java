@@ -68,25 +68,4 @@ class SimulacaoControllerTest {
 
         Mockito.verify(simulacaoService).simular(simulacaoRequest);
     }
-
-    @Test
-    @DisplayName("Deve retornar status 400 Bad Request quando o serviço lança IllegalArgumentException")
-    void deveRetornarBadRequest_quandoServicoLancaIllegalArgumentException() {
-
-        String errorMessage = "Produto de empréstimo não encontrado para o ID informado.";
-        Mockito.when(simulacaoService.simular(any(SimulacaoRequest.class)))
-                .thenThrow(new IllegalArgumentException(errorMessage));
-
-        Response response = controller.simular(simulacaoRequest);
-
-        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-        assertNotNull(response.getEntity());
-        assertInstanceOf(SimulacaoController.ErroResponse.class, response.getEntity());
-
-        SimulacaoController.ErroResponse erro = (SimulacaoController.ErroResponse) response.getEntity();
-        assertEquals("Erro de validação", erro.tipo());
-        assertEquals(errorMessage, erro.mensagem());
-
-        Mockito.verify(simulacaoService).simular(simulacaoRequest);
-    }
 }

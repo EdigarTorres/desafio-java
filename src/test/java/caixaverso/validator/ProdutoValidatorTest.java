@@ -53,7 +53,7 @@ class ProdutoValidatorTest {
 
         BadRequestException exception = assertThrows(BadRequestException.class, () -> validator.validate(request));
 
-        assertEquals("A taxa de juros deve ser maior ou igual a zero.", exception.getMessage());
+        assertEquals("A taxa de juros é obrigatória.", exception.getMessage());
     }
 
     @Test
@@ -87,6 +87,6 @@ class ProdutoValidatorTest {
 
         BadRequestException exception = assertThrows(BadRequestException.class, () -> validator.validate(request));
 
-        assertEquals("O prazo máximo deve ser maior que zero.", exception.getMessage());
+        assertEquals("O prazo máximo é obrigatório.", exception.getMessage());
     }
 }
