@@ -2,8 +2,7 @@ package caixaverso.controller;
 
 import caixaverso.dto.ProdutoRequest;
 import caixaverso.model.ProdutoEmprestimo;
-import caixaverso.validator.ProdutoValidator;
-import jakarta.persistence.EntityManager;
+import caixaverso.service.ProdutoService;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -17,19 +16,18 @@ import java.util.List;
 @Transactional
 public class ProdutoController {
 
-    private final EntityManager entityManager;
-    private final ProdutoValidator produtoValidator;
 
-    public ProdutoController(EntityManager entityManager, ProdutoValidator produtoValidator) {
-        this.entityManager = entityManager;
-        this.produtoValidator = produtoValidator;
+    private final ProdutoService produtoService;
+
+    public ProdutoController(ProdutoService produtoService) {
+        this.produtoService = produtoService;
     }
 
     @GET
     @Operation(summary = "Lista todos os produtos de empréstimo cadastrados",
                description = "Retorna uma lista de todos os produtos de empréstimo cadastrados.")
     public List<ProdutoEmprestimo> listar() {
-        return entityManager.createQuery("FROM ProdutoEmprestimo", ProdutoEmprestimo.class).getResultList();
+        return produtoService.listarProdutos();
     }
 
     @GET
@@ -37,24 +35,14 @@ public class ProdutoController {
     @Operation(summary = "Busca um produto de empréstimo por ID",
                description = "Retorna um produto de empréstimo pelo seu ID.")
     public ProdutoEmprestimo listarPorId(@PathParam("id") Long id) {
-        ProdutoEmprestimo produto = entityManager.find(ProdutoEmprestimo.class, id);
-        if (produto == null) {
-            throw new NotFoundException("Produto não encontrado");
-        }
-        return produto;
+        return produtoService.listarPorId(id);
     }
 
     @POST
     @Operation(summary = "Cadastra um novo produto de empréstimo",
                description = "Cria um novo produto de empréstimo com os dados fornecidos.")
     public ProdutoEmprestimo cadastrar(ProdutoRequest request) {
-        produtoValidator.validate(request);
-        ProdutoEmprestimo produto = new ProdutoEmprestimo();
-        produto.setNome(request.nome());
-        produto.setTaxaJurosAnual(request.taxaJurosAnual());
-        produto.setPrazoMaximoMeses(request.prazoMaximoMeses());
-        entityManager.persist(produto);
-        return produto;
+        return produtoService.cadastrar(request);
     }
 
     @PUT
@@ -62,15 +50,7 @@ public class ProdutoController {
     @Operation(summary = "Atualiza um produto de empréstimo",
                description = "Atualiza um produto de empréstimo existente com os dados fornecidos.")
     public ProdutoEmprestimo atualizar(@PathParam("id") Long id, ProdutoRequest request) {
-        ProdutoEmprestimo existente = entityManager.find(ProdutoEmprestimo.class, id);
-        if (existente == null) {
-            throw new NotFoundException("Produto não encontrado");
-        }
-        produtoValidator.validate(request);
-        existente.setNome(request.nome());
-        existente.setTaxaJurosAnual(request.taxaJurosAnual());
-        existente.setPrazoMaximoMeses(request.prazoMaximoMeses());
-        return existente;
+        return produtoService.atualizar(id, request);
     }
 
     @DELETE
@@ -78,11 +58,7 @@ public class ProdutoController {
     @Operation(summary = "Deleta um produto de empréstimo",
                description = "Remove um produto de empréstimo pelo seu ID.")
     public void deletar(@PathParam("id") Long id) {
-        ProdutoEmprestimo produto = entityManager.find(ProdutoEmprestimo.class, id);
-        if (produto == null) {
-            throw new NotFoundException("Produto não encontrado");
-        }
-        entityManager.remove(produto);
+        produtoService.deletar(id);
     }
 }
 
