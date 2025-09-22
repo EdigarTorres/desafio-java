@@ -23,7 +23,7 @@ public class SimulacaoController {
 
     @POST
     @Operation(
-            summary = "Simula um empréstimo com base em um produto",
+            summary = "Simula um empréstimo com base em um produto.",
             description = "Recebe o ID do produto, valor solicitado e prazo em meses. Retorna o cálculo detalhado."
     )
     public Response simular(@Valid SimulacaoRequest request) {
