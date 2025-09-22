@@ -51,9 +51,9 @@ class SimulacaoServiceTest {
         assertEquals("10000.00", response.valorSolicitado());
         assertEquals(24, response.prazoMeses());
         assertEquals("470.72", response.valorParcelaMensal());
-        assertEquals("11297.28", response.valorTotalComJuros());
+        assertEquals("11297.39", response.valorTotalComJuros());
         assertEquals(24, response.memoriaCalculo().size());
-        assertEquals("0.11", response.memoriaCalculo().get(23).saldoDevedor());
+        assertEquals("0.00", response.memoriaCalculo().get(23).saldoDevedor());
 
         Mockito.verify(entityManager).find(ProdutoEmprestimo.class, 1L);
     }
