@@ -9,9 +9,14 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
+
 import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
 
 @QuarkusTest
 class SimulacaoValidatorTest {
@@ -78,5 +83,46 @@ class SimulacaoValidatorTest {
         );
         assertEquals(expectedMessage, exception.getMessage());
         Mockito.verify(produtoDao).listarPorId(1L);
+    }
+
+    @Test
+    @DisplayName("Deve lançar IllegalArgumentException quando o ID do produto é nulo")
+    void deveLancarExcecao_quandoIdProdutoEhNulo() {
+
+        SimulacaoRequest request = new SimulacaoRequest(null, 10000.0, 12);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> simulacaoValidator.validateAndGetProduto(request));
+
+        assertEquals("O ID do produto é obrigatório.", exception.getMessage());
+        Mockito.verify(produtoDao, Mockito.never()).listarPorId(anyLong());
+    }
+
+    @ParameterizedTest(name = "Deve lançar exceção para valor solicitado inválido: {0}")
+    @ValueSource(doubles = {0.0, -100.0})
+    @DisplayName("Deve lançar IllegalArgumentException quando o valor solicitado não é positivo")
+    void deveLancarExcecao_quandoValorSolicitadoNaoEhPositivo(Double valorInvalido) {
+
+        SimulacaoRequest request = new SimulacaoRequest(1L, valorInvalido, 12);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> simulacaoValidator.validateAndGetProduto(request));
+
+        assertEquals("O valor solicitado deve ser um número positivo.", exception.getMessage());
+        Mockito.verify(produtoDao, Mockito.never()).listarPorId(anyLong());
+    }
+
+    @ParameterizedTest(name = "Deve lançar exceção para prazo inválido: {0}")
+    @ValueSource(ints = {0, -1})
+    @DisplayName("Deve lançar IllegalArgumentException quando o prazo em meses não é positivo")
+    void deveLancarExcecao_quandoPrazoMesesNaoEhPositivo(Integer prazoInvalido) {
+
+        SimulacaoRequest request = new SimulacaoRequest(1L, 10000.0, prazoInvalido);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> simulacaoValidator.validateAndGetProduto(request));
+
+        assertEquals("O prazo em meses deve ser um número positivo.", exception.getMessage());
+        Mockito.verify(produtoDao, Mockito.never()).listarPorId(anyLong());
     }
 }
