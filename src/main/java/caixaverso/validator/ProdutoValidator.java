@@ -13,10 +13,16 @@ public class ProdutoValidator {
         if (produto.nome() == null || produto.nome().isBlank()) {
             throw new BadRequestException("O nome do produto é obrigatório.");
         }
-        if (produto.taxaJurosAnual() == null || produto.taxaJurosAnual().compareTo(BigDecimal.ZERO) < 0) {
+        if (produto.taxaJurosAnual() == null) {
+            throw new BadRequestException("A taxa de juros é obrigatória.");
+        }
+        if (produto.taxaJurosAnual().compareTo(BigDecimal.ZERO) < 0) {
             throw new BadRequestException("A taxa de juros deve ser maior ou igual a zero.");
         }
-        if (produto.prazoMaximoMeses() == null || produto.prazoMaximoMeses() <= 0) {
+        if (produto.prazoMaximoMeses() == null) {
+            throw new BadRequestException("O prazo máximo é obrigatório.");
+        }
+        if (produto.prazoMaximoMeses() <= 0) {
             throw new BadRequestException("O prazo máximo deve ser maior que zero.");
         }
     }
