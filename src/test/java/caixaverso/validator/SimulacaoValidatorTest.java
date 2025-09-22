@@ -108,7 +108,20 @@ class SimulacaoValidatorTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> simulacaoValidator.validateAndGetProduto(request));
 
-        assertEquals("O valor solicitado deve ser um número positivo.", exception.getMessage());
+        assertEquals("O valor solicitado deve ser maior que zero.", exception.getMessage());
+        Mockito.verify(produtoDao, Mockito.never()).listarPorId(anyLong());
+    }
+
+    @Test
+    @DisplayName("Deve lançar IllegalArgumentException quando o valor solicitado excede 1.000.000")
+    void deveLancarExcecao_quandoValorSolicitadoExcedeLimite() {
+
+        SimulacaoRequest request = new SimulacaoRequest(1L, 1000000.01, 12);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> simulacaoValidator.validateAndGetProduto(request));
+
+        assertEquals("O valor solicitado deve ser menor ou igual a R$1.000.000,00.", exception.getMessage());
         Mockito.verify(produtoDao, Mockito.never()).listarPorId(anyLong());
     }
 
@@ -122,7 +135,7 @@ class SimulacaoValidatorTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                 () -> simulacaoValidator.validateAndGetProduto(request));
 
-        assertEquals("O prazo em meses deve ser um número positivo.", exception.getMessage());
+        assertEquals("O prazo em meses deve ser maior que zero.", exception.getMessage());
         Mockito.verify(produtoDao, Mockito.never()).listarPorId(anyLong());
     }
 }
