@@ -5,7 +5,7 @@ import caixaverso.dto.SimulacaoResponse;
 import caixaverso.dto.SimulacaoResponse.ParcelaDetalhe;
 import caixaverso.model.ProdutoEmprestimo;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.persistence.EntityManager;
+import caixaverso.dao.ProdutoDao;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -15,14 +15,14 @@ import java.util.List;
 @ApplicationScoped
 public class SimulacaoService {
 
-    private final EntityManager entityManager;
+    private final ProdutoDao produtoDao;
 
-    public SimulacaoService(EntityManager entityManager) {
-        this.entityManager = entityManager;
+    public SimulacaoService(ProdutoDao produtoDao) {
+        this.produtoDao = produtoDao;
     }
 
     public SimulacaoResponse simular(SimulacaoRequest request) {
-        ProdutoEmprestimo produto = entityManager.find(ProdutoEmprestimo.class, request.idProduto());
+        ProdutoEmprestimo produto = produtoDao.listarPorId(request.idProduto());
         if (produto == null) {
             throw new IllegalArgumentException("Produto de empréstimo não encontrado para o ID informado.");
         }

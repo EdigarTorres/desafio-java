@@ -22,11 +22,7 @@ public class ProdutoService {
     }
 
     public List<ProdutoEmprestimo> listarProdutos() {
-        try {return produtoDao.listarProdutos();}
-        catch (Exception e){
-            throw new NotFoundException("Nenhum produto encontrado");
-        }
-
+        return produtoDao.listarProdutos();
     }
 
     public ProdutoEmprestimo listarPorId(Long id) {
